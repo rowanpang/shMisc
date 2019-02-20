@@ -10,7 +10,7 @@ netA="
 "
 netA="
 192.168.17.1
-""
+"
 
 netB="
 192.168.20.1
@@ -22,7 +22,7 @@ netB="
 "
 netB="
 192.168.20.1
-""
+"
 
 netMA="
 192.168.17.x
@@ -46,7 +46,7 @@ function sshChk(){
 function doChange(){
     toCons=$1
     toChanges=$2
-    netM=$netMB
+    netM=$3
 
     i=0
     for cli in $toCons;do
@@ -82,6 +82,7 @@ function doChange(){
 function main(){
     sshChk "$netA"
     sshChk "$netB"
+    doChange $netA $netB $netMB
 }
 
 debug="yes"
