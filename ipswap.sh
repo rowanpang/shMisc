@@ -24,8 +24,8 @@ netB="
 192.168.20.4
 "
 
-dstA="192.168.20.x"
-dstB="192.168.120."
+dstNetA="192.168.20"
+dstNetB="192.168.120"
 netM=""
 
 function sshChk(){
@@ -56,7 +56,7 @@ function pingChk(){
 function doChange(){
     toCons=$1
     toChanges=$2
-    dst=$3
+    dstNet=$3
 
     i=0
     for cli in $toCons;do
@@ -75,28 +75,28 @@ function doChange(){
 	    gwsfx=${gw##*.}
 	fi
 
-	netM="$netM $dst.$ipsfx"
+	netM="$netM $dstNet.$ipsfx"
 
-	echo "$cli:$toCh->$dst,if:$inf,lk:$link,gw:$mdgw,ipsfx:$ipsfx,gwsfx:$gwsfx"
+	echo "$cli:$toCh->$dstNet,if:$inf,lk:$link,gw:$mdgw,ipsfx:$ipsfx,gwsfx:$gwsfx"
 
 	#do modify
 	if [ X$debug == X ];then
-	    ssh $cli "nmcli connection modify $link ipv4.address $dst.$ipsfx/24"
+	    ssh $cli "nmcli connection modify $link ipv4.address $dstNet.$ipsfx/24"
 	    if [ $mdgw -ge 1 ];then
-		ssh $cli "nmcli connection modify $link ipv4.gateway $dst.$gwsfx"
+		ssh $cli "nmcli connection modify $link ipv4.gateway $dstNet.$gwsfx"
 	    fi
 	    ssh $cli "nmcli connection down $link;nmcli connnection up $link"
 	fi
     done
 
-    pingChk "netM"
+    pingChk "$netM"
 }
 
 function main(){
     sshChk "$netA"
     sshChk "$netB"
-    doChange "$netA" "$netB" "$dstB"
-    doChange "$netM" "$netA" "$dstA"
+    doChange "$netA" "$netB" "$dstNetB"
+    doChange "$netM" "$netA" "$dstNetA"
 }
 
 debug="yes"
