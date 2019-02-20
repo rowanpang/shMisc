@@ -56,7 +56,7 @@ function doChange(){
 
 	ssh $cli systemctl restart NetworkManager
 
-	inf=`ssh $cli 'ip a' | grep "$toCh" | awk '{print $8}'`
+	inf=`ssh $cli 'ip a' | grep "$toCh/" | awk '{print $8}'`
 	link=`ssh $cli 'nmcli' | grep ": connected to " | grep "$inf" | sed 's/: connect.*//'`
 
 	mdgw=`ssh $cli 'ip r' | grep default | grep -c $link`
