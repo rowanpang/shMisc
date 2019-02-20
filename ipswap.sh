@@ -43,7 +43,7 @@ function sshChk(){
 function pingChk(){
     toChk=$1
     for cli in $toChk;do
-	ping -n 3 2>&1 >/dev/null
+	ping -c 3 $cli 2>&1 >/dev/null
 	ret=$?
 	if [ $ret -ne 0 ];then
 	    echo "pingChk error for $cli,exit"
