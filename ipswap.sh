@@ -49,26 +49,26 @@ function doChange(){
     for cli in $toCons;do
 	((i+=1))
 	toCh=$(echo $toChanges | awk "{print \$$i}")
-	sfix=${toCh##*.}
+	ipsfx=${toCh##*.}
 
 	ssh $cli systemctl restart NetworkManager
 
-	inf=`ssh $cli 'ip a' | grep "$toCh/" | awk '{print $8}'`
+	inf=`ssh $cli 'ip a' | grep "$toCh/" | awk '{print $NF}'`
 	link=`ssh $cli 'nmcli' | grep ": connected to " | grep "$inf" | sed 's/: connect.*//'`
 
 	mdgw=`ssh $cli 'ip r' | grep default | grep -c $link`
 	if [ $mdgw -ge 1 ];then
-	    ipgw=`ssh $cli 'ip r' | grep default | awk '{print $3}'`
-	    gwSfix=${ipgw##*.}
+	    gw=`ssh $cli 'ip r' | grep default | awk '{print $3}'`
+	    gwsfx=${gw##*.}
 	fi
 
-	echo "$cli: $toCh->$netM,$inf,$link,$mdgw"
+	echo "$cli:$toCh->$netM,if:$inf,lk:$link,gw:$mdgw,ipsfx:$ipsfx,gwsfx:$gwsfx"
 
 	#do modify
 	if [ X$debug == X ];then
-	    ssh $cli "nmcli connection modify $link ipv4.address $netM.$sfix/24"
+	    ssh $cli "nmcli connection modify $link ipv4.address $netM.$ipsfx/24"
 	    if [ $mdgw -ge 1 ];then
-		ssh $cli "nmcli connection modify $link ipv4.gateway $netM.$gwSfix"
+		ssh $cli "nmcli connection modify $link ipv4.gateway $netM.$gwsfx"
 	    fi
 	    ssh $cli "nmcli connection down $link;nmcli connnection up $link"
 	fi
