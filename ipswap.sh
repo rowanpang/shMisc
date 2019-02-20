@@ -24,12 +24,9 @@ netB="
 192.168.20.4
 "
 
-netMA="
-192.168.17.x
-"
-netMB="
-192.168.120.
-"
+netMA="192.168.17.x"
+netMB="192.168.120."
+
 function sshChk(){
     toChk=$1
     for cli in $toChk;do
