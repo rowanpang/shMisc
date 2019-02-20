@@ -33,7 +33,7 @@ netMB="
 function sshChk(){
     toChk=$1
     for cli in $toChk;do
-	ssh $cli ls
+	ssh $cli 'ls 2>&1 >/dev/null'
 	ret=$?
 	if [ $ret -ne 0 ];then
 	    echo "sshChk error for $cli,exit"
