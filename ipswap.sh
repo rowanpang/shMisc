@@ -24,8 +24,9 @@ netB="
 192.168.20.4
 "
 
-netMA="192.168.17.x"
-netMB="192.168.120."
+dstA="192.168.20.x"
+dstB="192.168.120."
+netM=""
 
 function sshChk(){
     toChk=$1
@@ -39,11 +40,23 @@ function sshChk(){
     done
 }
 
+function pingChk(){
+    toChk=$1
+    for cli in $toChk;do
+	ping -n 3 2>&1 >/dev/null
+	ret=$?
+	if [ $ret -ne 0 ];then
+	    echo "pingChk error for $cli,exit"
+	    exit
+	fi
+    done
+}
+
 
 function doChange(){
     toCons=$1
     toChanges=$2
-    netM=$3
+    dst=$3
 
     i=0
     for cli in $toCons;do
@@ -62,24 +75,28 @@ function doChange(){
 	    gwsfx=${gw##*.}
 	fi
 
-	echo "$cli:$toCh->$netM,if:$inf,lk:$link,gw:$mdgw,ipsfx:$ipsfx,gwsfx:$gwsfx"
+	netM="$netM $dst.$ipsfx"
+
+	echo "$cli:$toCh->$dst,if:$inf,lk:$link,gw:$mdgw,ipsfx:$ipsfx,gwsfx:$gwsfx"
 
 	#do modify
 	if [ X$debug == X ];then
-	    ssh $cli "nmcli connection modify $link ipv4.address $netM.$ipsfx/24"
+	    ssh $cli "nmcli connection modify $link ipv4.address $dst.$ipsfx/24"
 	    if [ $mdgw -ge 1 ];then
-		ssh $cli "nmcli connection modify $link ipv4.gateway $netM.$gwsfx"
+		ssh $cli "nmcli connection modify $link ipv4.gateway $dst.$gwsfx"
 	    fi
 	    ssh $cli "nmcli connection down $link;nmcli connnection up $link"
 	fi
-
     done
+
+    pingChk "netM"
 }
 
 function main(){
     sshChk "$netA"
     sshChk "$netB"
-    doChange "$netA" "$netB" "$netMB"
+    doChange "$netA" "$netB" "$dstB"
+    doChange "$netM" "$netA" "$dstA"
 }
 
 debug="yes"
