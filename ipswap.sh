@@ -9,7 +9,7 @@ netA="
 192.168.17.6
 "
 netA="
-192.168.17.1
+192.168.17.4
 "
 
 netB="
@@ -21,7 +21,7 @@ netB="
 192.168.20.6
 "
 netB="
-192.168.20.1
+192.168.20.4
 "
 
 netMA="
@@ -82,7 +82,7 @@ function doChange(){
 function main(){
     sshChk "$netA"
     sshChk "$netB"
-    doChange $netA $netB $netMB
+    doChange "$netA" "$netB" "$netMB"
 }
 
 debug="yes"
