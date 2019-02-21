@@ -1,57 +1,78 @@
 #!/bin/bash
 
-netA="
-192.168.17.1
-192.168.17.2
-192.168.17.3
-192.168.17.4
-192.168.17.5
-192.168.17.6
-"
-netA="
-192.168.17.4
-"
+nodeNum=6 			#nodeNum
+sfxStart=1 			#ip sfx start
+sfxGW=4				#forward gw sfx,gw for other nodes 255=NONE
+swpNet="192.168.20" 		#the net need to assign to other network"
+midNet="192.168.117" 		#ip for swpNet.x change to midNet.x
 
-netB="
-192.168.20.1
-192.168.20.2
-192.168.20.3
-192.168.20.4
-192.168.20.5
-192.168.20.6
-"
-netB="
-192.168.20.4
-"
 
-dstNetA="192.168.20"
-dstNetB="192.168.120"
-netM=""
+function netConst(){
+    ipsA=""
+    ipsB=""
+
+    nets=`ip a | grep 192.168. | awk '{print $2}'`
+    netsNum=`echo "$nets" | wc -l`
+
+    if [ $netsNum -ne 2 ];then
+	echo "net error: $nets, exit"
+	exit
+    fi
+
+    netA=`echo $nets | awk '{print $1}'`
+    netA=${netA%.*}
+    netB=`echo $nets | awk '{print $2}'`
+    netB=${netB%.*}
+
+    echo "networks :$netA , $netB"
+
+    for ((i=0; i<nodeNum; i++));do
+	let sfx=sfxStart+i
+	if [ $sfx == $sfxGW ];then
+	    hasGW="True"
+	    continue
+   	fi
+	ipsA="$ipsA $netA.$sfx"
+	ipsB="$ipsB $netB.$sfx"
+    done
+    
+    if [ X$hasGW != X ];then
+    	ipsA="$ipsA $netA.$sfxGW"
+    	ipsB="$ipsB $netB.$sfxGW"
+    fi
+
+    echo "ipsA:$ipsA"
+    echo "ipsB:$ipsB"
+}
 
 function sshChk(){
     toChk=$1
+    echo "in func sshChk"
     for cli in $toChk;do
+	echo -n "$cli "
 	ssh $cli 'ls 2>&1 >/dev/null'
 	ret=$?
 	if [ $ret -ne 0 ];then
-	    echo "sshChk error for $cli,exit"
+	    echo "sshChk error,exit"
 	    exit
 	fi
 
-	echo "sshChk ok for $cli"
+	echo "sshChk ok"
     done
 }
 
 function pingChk(){
     toChk=$1
+    echo "in func pingChk"
     for cli in $toChk;do
+	echo -n "$cli "
 	ping -c 3 $cli 2>&1 >/dev/null
 	ret=$?
 	if [ $ret -ne 0 ];then
-	    echo "pingChk error for $cli,exit"
+	    echo "pingChk error,exit"
 	    exit
 	fi
-	echo "pingChk ok for $cli"
+	echo "pingChk ok"
     done
 }
 
@@ -60,14 +81,18 @@ function doChange(){
     toCons=$1
     toChanges=$2
     dstNet=$3
-
+    dsts=""
     i=0
+
+    echo "in func doChange"
     for cli in $toCons;do
 	((i+=1))
 	toCh=$(echo $toChanges | awk "{print \$$i}")
 	ipsfx=${toCh##*.}
 
-	ssh $cli systemctl restart NetworkManager
+	if [ X$debug == X ];then
+	    ssh $cli systemctl restart NetworkManager
+        fi
 
 	inf=`ssh $cli 'ip a' | grep "$toCh/" | awk '{print $NF}'`
 	link=`ssh $cli 'nmcli' | grep ": connected to " | grep "$inf" | sed 's/: connect.*//'`
@@ -78,9 +103,9 @@ function doChange(){
 	    gwsfx=${gw##*.}
 	fi
 
-	netM="$netM $dstNet.$ipsfx"
+	dsts="$dsts $dstNet.$ipsfx"
 
-	echo "$cli:$toCh->$dstNet,if:$inf,lk:$link,gw:$mdgw,ipsfx:$ipsfx,gwsfx:$gwsfx"
+	echo "con:$cli,if:$inf,lk:$link,$toCh->$dstNet.$ipsfx,gw:$mdgw,gwsfx:$gwsfx"
 
 	#do modify
 	if [ X$debug == X ];then
@@ -92,14 +117,23 @@ function doChange(){
 	fi
     done
 
-    pingChk "$netM"
+    ipsM="$dsts"
+    echo "ipsM:$ipsM"
+    pingChk "$dsts"
 }
 
 function main(){
-    sshChk "$netA"
-    sshChk "$netB"
-    doChange "$netA" "$netB" "$dstNetB"
-    doChange "$netM" "$netA" "$dstNetA"
+    netConst
+    sshChk "$ipsA"
+    sshChk "$ipsB"
+    if [ $swpNet == $netA ];then
+	doChange "$ipsB" "$ipsA" "$midNet"
+	doChange "$ipsM" "$ipsB" "$swpNet"
+    else
+	doChange "$ipsA" "$ipsB" "$midNet"
+	doChange "$ipsM" "$ipsA" "$swpNet"
+    fi
+
 }
 
 debug="yes"
