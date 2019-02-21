@@ -37,6 +37,8 @@ function sshChk(){
 	    echo "sshChk error for $cli,exit"
 	    exit
 	fi
+
+	echo "sshChk ok for $cli"
     done
 }
 
@@ -49,6 +51,7 @@ function pingChk(){
 	    echo "pingChk error for $cli,exit"
 	    exit
 	fi
+	echo "pingChk ok for $cli"
     done
 }
 
@@ -85,7 +88,7 @@ function doChange(){
 	    if [ $mdgw -ge 1 ];then
 		ssh $cli "nmcli connection modify $link ipv4.gateway $dstNet.$gwsfx"
 	    fi
-	    ssh $cli "nmcli connection down $link;nmcli connnection up $link"
+	    ssh $cli "nmcli connection down $link;nmcli connection up $link"
 	fi
     done
 
