@@ -15,7 +15,7 @@ function netConst(){
     netsNum=`echo "$nets" | wc -l`
 
     if [ $netsNum -ne 2 ];then
-	echo "net error: $nets, exit"
+	echo "net error, $netsNum not 2: $nets, exit"
 	exit
     fi
 
@@ -35,7 +35,7 @@ function netConst(){
 	ipsA="$ipsA $netA.$sfx"
 	ipsB="$ipsB $netB.$sfx"
     done
-    
+
     if [ X$hasGW != X ];then
     	ipsA="$ipsA $netA.$sfxGW"
     	ipsB="$ipsB $netB.$sfxGW"
