@@ -3,14 +3,23 @@
 nodeNum=6 			#nodeNum
 sfxStart=1 			#ip sfx start
 sfxGW=4				#forward gw sfx,gw for other nodes 255=NONE
-swpNet="192.168.20" 		#the net need to assign to other network"
-midNet="192.168.117" 		#ip for swpNet.x change to midNet.x
+
+netA=""
+netB=""
+netSwp="192.168.20" 		#the net need to assign to other network"
+netMid="192.168.117" 		#ip for netSwp.x change to netMid.x
+
+ipsA=""
+ipsB=""
 
 
 function netConst(){
-    ipsA=""
-    ipsB=""
+    if [ X$ipsA != X ];then
+	echo "ipsA not None return"
+	return
+    fi
 
+    echo "in netConst do construct for ipsA,ipsB"
     nets=`ip a | grep 192.168. | awk '{print $2}'`
     netsNum=`echo "$nets" | wc -l`
 
@@ -122,19 +131,61 @@ function doChange(){
     pingChk "$dsts"
 }
 
+function doSwap(){
+    if [ $netSwp == $netA ];then
+	doChange "$ipsB" "$ipsA" "$netMid"
+	doChange "$ipsM" "$ipsB" "$netSwp"
+    else
+	doChange "$ipsA" "$ipsB" "$netMid"
+	doChange "$ipsM" "$ipsA" "$netSwp"
+    fi
+}
+
+function usage() {
+    echo "Usage: $0 [options]
+	Options:
+	    -h	    Display this msg
+	    -s	    doSwap
+	    -c	    doChange
+	    -r	    actually run
+	"
+}
+
+function optParse(){
+    while getopts "hsc" opt;do
+	case $opt in
+	    h)
+		usage
+		exit 0
+		;;
+	    s)
+		opSwp="True"
+		;;
+	    c)
+		opChange="True"
+		;;
+	    r)
+		debug=""
+		;;
+	esac
+    done
+
+    echo "opSwp:$opSwp,opChange:$opChange,debug:$debug"
+}
+
 function main(){
+    optParse $@
+
+    exit
     netConst
     sshChk "$ipsA"
     sshChk "$ipsB"
-    if [ $swpNet == $netA ];then
-	doChange "$ipsB" "$ipsA" "$midNet"
-	doChange "$ipsM" "$ipsB" "$swpNet"
-    else
-	doChange "$ipsA" "$ipsB" "$midNet"
-	doChange "$ipsM" "$ipsA" "$swpNet"
+    if [ X$opSwp != X ];then
+	doSwap
+    elif [ X$opChange != X ];then
+	doChange
     fi
-
 }
 
 debug="yes"
-main
+main $@
