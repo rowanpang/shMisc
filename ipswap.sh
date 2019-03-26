@@ -14,7 +14,7 @@ ipsB=""
 
 
 function netConst(){
-    if [ X$ipsA != X ];then
+    if [ X"$ipsA" != X ];then
 	echo "ipsA not None return"
 	return
     fi
@@ -128,7 +128,9 @@ function doChange(){
 
     ipsM="$dsts"
     echo "ipsM:$ipsM"
-    pingChk "$dsts"
+    if [ X$debug == X ];then
+	pingChk "$dsts"
+    fi
 }
 
 function doSwap(){
@@ -152,7 +154,7 @@ function usage() {
 }
 
 function optParse(){
-    while getopts "hsc" opt;do
+    while getopts "hscr" opt;do
 	case $opt in
 	    h)
 		usage
@@ -179,11 +181,11 @@ function main(){
     exit
     netConst
     sshChk "$ipsA"
-    sshChk "$ipsB"
     if [ X$opSwp != X ];then
+	sshChk "$ipsB"
 	doSwap
     elif [ X$opChange != X ];then
-	doChange
+	doChange "$ipsA" "$ipsB" "$netMid"
     fi
 }
 
