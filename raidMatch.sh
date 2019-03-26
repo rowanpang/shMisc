@@ -75,6 +75,8 @@ function matchblock(){
 
 function main() {
     raidPhyDrvInfos=""
+
+    depChk
     nums=`queryControl`
     for (( i = 0; i < $nums; i++ )); do
 	phyDrvInfo $i
